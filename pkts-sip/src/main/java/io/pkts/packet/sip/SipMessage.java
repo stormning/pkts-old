@@ -16,6 +16,7 @@ import io.pkts.packet.sip.header.RouteHeader;
 import io.pkts.packet.sip.header.SipHeader;
 import io.pkts.packet.sip.header.ToHeader;
 import io.pkts.packet.sip.header.ViaHeader;
+import io.pkts.packet.sip.impl.SipInitialLine;
 import io.pkts.packet.sip.impl.SipParser;
 
 import java.io.IOException;
@@ -36,6 +37,9 @@ public interface SipMessage extends Cloneable {
      * @return
      */
     Buffer getInitialLine();
+
+
+    void setInitialLine(SipInitialLine initialLine);
 
     /**
      * Got tired of casting the {@link SipMessage} into a {@link SipRequest} so
@@ -465,6 +469,13 @@ public interface SipMessage extends Cloneable {
      * @return
      */
     SipMessage clone();
+
+    /**
+     * set payload
+     * add by stormning
+     * @param payload
+     */
+    void setPayload(Buffer payload);
 
     /**
      * Frame the supplied buffer into a {@link SipMessage}. No deep analysis of the message will be

@@ -58,6 +58,12 @@ public interface SipURI extends URI {
     void setPort(int port);
 
     /**
+     *
+     * @param host
+     */
+    void setHost(Buffer host);
+
+    /**
      * Check whether this is a sips URI.
      * 
      * @return true if this indeed is a sips URI, false otherwise.

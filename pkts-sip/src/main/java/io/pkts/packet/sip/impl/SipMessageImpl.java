@@ -1,44 +1,28 @@
 /**
- * 
+ *
  */
 package io.pkts.packet.sip.impl;
 
 import io.pkts.buffer.Buffer;
 import io.pkts.buffer.Buffers;
-import io.pkts.packet.sip.SipMessage;
-import io.pkts.packet.sip.SipParseException;
-import io.pkts.packet.sip.SipRequest;
-import io.pkts.packet.sip.SipResponse;
-import io.pkts.packet.sip.header.CSeqHeader;
-import io.pkts.packet.sip.header.CallIdHeader;
-import io.pkts.packet.sip.header.ContactHeader;
-import io.pkts.packet.sip.header.ContentTypeHeader;
-import io.pkts.packet.sip.header.ExpiresHeader;
-import io.pkts.packet.sip.header.FromHeader;
-import io.pkts.packet.sip.header.MaxForwardsHeader;
-import io.pkts.packet.sip.header.RecordRouteHeader;
-import io.pkts.packet.sip.header.RouteHeader;
-import io.pkts.packet.sip.header.SipHeader;
-import io.pkts.packet.sip.header.ToHeader;
-import io.pkts.packet.sip.header.ViaHeader;
-import io.pkts.sdp.SDPFactory;
-import io.pkts.sdp.SdpException;
-import io.pkts.sdp.SdpParseException;
+import io.pkts.packet.sip.*;
+import io.pkts.packet.sip.header.*;
+import io.pkts.sdp.SDPAnnounceParserEx;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
 /**
  * @author jonas@jonasborjesson.com
- * 
  */
 public abstract class SipMessageImpl implements SipMessage {
+
+    private static final ContentDecoder DEFAULT_ENCODER = new XmlContentDecoder();
+
+    private ContentDecoder contentDecoder = DEFAULT_ENCODER;
 
     public static final Buffer FROM_HEADER = Buffers.wrap("From".getBytes());
 
@@ -48,7 +32,6 @@ public abstract class SipMessageImpl implements SipMessage {
 
     public static final Buffer CSEQ_HEADER = Buffers.wrap("CSeq".getBytes());
 
-    private final SDPFactory sdpFactory = SDPFactory.getInstance();
 
     /**
      * The initial line of the sip message, which is either a request or a
@@ -69,12 +52,12 @@ public abstract class SipMessageImpl implements SipMessage {
     /**
      * The payload, which may be null
      */
-    private final Buffer payload;
+    private Buffer payload;
 
     /**
      * Map with parsed headers. Need to change since there are many headers that
      * can appear multiple times. We'll get to that...
-     * 
+     * <p>
      * We'll keep the default size of 16 and load factory of 0.75, which means
      * that we won't do a re-hash until we hit 12 headers. A basic request has
      * around 10ish headers but in real life there will be much more so get some
@@ -83,14 +66,10 @@ public abstract class SipMessageImpl implements SipMessage {
     private final Map<Buffer, List<SipHeader>> parsedHeaders = new LinkedHashMap<Buffer, List<SipHeader>>(16, 0.75f);
 
     /**
-     * 
-     * @param rawInitialBuffer
-     *            the raw initial line, which is either a request or a response
-     *            line (hopefully anyway, we won't know until we try!_
-     * @param headers
-     *            all the headers (un-parsed) of the SIP message
-     * @param payload
-     *            the payload or null if there is none
+     * @param rawInitialBuffer the raw initial line, which is either a request or a response
+     *                         line (hopefully anyway, we won't know until we try!_
+     * @param headers          all the headers (un-parsed) of the SIP message
+     * @param payload          the payload or null if there is none
      */
     public SipMessageImpl(final Buffer rawInitialBuffer, final Buffer headers, final Buffer payload) {
         this.rawInitialLine = rawInitialBuffer;
@@ -99,13 +78,9 @@ public abstract class SipMessageImpl implements SipMessage {
     }
 
     /**
-     * 
-     * @param initialLine
-     *            the initial line, which is either a request or a response line
-     * @param headers
-     *            all the headers (un-parsed) of the SIP message
-     * @param payload
-     *            the payload or null if there is none
+     * @param initialLine the initial line, which is either a request or a response line
+     * @param headers     all the headers (un-parsed) of the SIP message
+     * @param payload     the payload or null if there is none
      */
     public SipMessageImpl(final SipInitialLine initialLine, final Buffer headers, final Buffer payload) {
         this.initialLine = initialLine;
@@ -153,11 +128,11 @@ public abstract class SipMessageImpl implements SipMessage {
      * Since everything is done lazily, this method will parse and return the
      * initial line as a {@link SipRequestLine}. Only meant to be used by the
      * sub-classes.
-     * 
+     * <p>
      * Of course, this method could throw both {@link ClassCastException} in
      * case this is actually a response and the parsing of the request line
      * could also fail.
-     * 
+     *
      * @return
      */
     protected SipRequestLine getRequestLine() throws SipParseException, ClassCastException {
@@ -167,7 +142,7 @@ public abstract class SipMessageImpl implements SipMessage {
     /**
      * Same as {@link #getRequestLine()} but for {@link SipResponseLine}
      * instead.
-     * 
+     *
      * @return
      * @throws SipParseException
      * @throws ClassCastException
@@ -181,10 +156,9 @@ public abstract class SipMessageImpl implements SipMessage {
     }
 
     /**
-     * 
      * @param headerName
-     * @param frame flag indicating whether or not we should make sure that the header has been
-     *        framed to its "real" type.
+     * @param frame      flag indicating whether or not we should make sure that the header has been
+     *                   framed to its "real" type.
      * @return
      * @throws SipParseException
      */
@@ -278,7 +252,7 @@ public abstract class SipMessageImpl implements SipMessage {
      * There are situations, such as when user does a
      * {@link #setHeader(SipHeader)}, where we must frame all headers, this
      * method does that.
-     * 
+     *
      * @throws SipParseException
      */
     private void frameAllHeaders() throws SipParseException {
@@ -327,7 +301,6 @@ public abstract class SipMessageImpl implements SipMessage {
     }
 
     /**
-     * 
      * {@inheritDoc}
      */
     @Override
@@ -631,23 +604,21 @@ public abstract class SipMessageImpl implements SipMessage {
         if (!hasContent()) {
             return null;
         }
-
         try {
             final ContentTypeHeader contentType = getContentTypeHeader();
             if (contentType == null) {
                 return null;
             }
-
             if (contentType.isSDP()) {
                 try {
-                    return this.sdpFactory.parse(this.payload);
-                } catch (final SdpParseException e) {
-                    throw new SipParseException(e.getCharOffset(), e.getMessage(), e);
-                } catch (final SdpException e) {
-                    throw new SipParseException(0, "Unable to parse the content as an SDP", e);
+                    SDPAnnounceParserEx parserEx = new SDPAnnounceParserEx(payload.toString());
+                    return parserEx.parse();
+                } catch (ParseException e) {
+                    throw new SipParseException(0, e.getMessage(), e);
                 }
+            } else {
+                return contentDecoder.decode(contentType, payload);
             }
-            return this.payload;
         } catch (final SipParseException e) {
             throw new SipParseException(e.getErrorOffset(), "Unable to process the Content-Type header", e);
         }
@@ -684,20 +655,33 @@ public abstract class SipMessageImpl implements SipMessage {
 
     @Override
     public Buffer toBuffer() {
+        //compute content length
+        computeContentLength();
         final Buffer buffer = Buffers.createBuffer(2048);
         getInitialLine().getBytes(buffer);
         buffer.write(SipParser.CR);
         buffer.write(SipParser.LF);
         transferHeaders(buffer);
+        //add cr lf by stormning
         if (this.payload != null) {
+            buffer.write(SipParser.CR);
+            buffer.write(SipParser.LF);
             this.payload.getBytes(0, buffer);
         }
         return buffer;
     }
 
+    private void computeContentLength() {
+        int contentLength = 0;
+        if (payload != null) {
+            contentLength = payload.getArray().length;
+        }
+        setHeader(ContentLengthHeader.with().length(contentLength).build());
+    }
+
     /**
      * Helper method to clone all the headers into one continuous buffer.
-     * 
+     *
      * @return
      */
     protected Buffer cloneHeaders() {
@@ -712,7 +696,7 @@ public abstract class SipMessageImpl implements SipMessage {
 
     /**
      * Helper method to clone the payload.
-     * 
+     *
      * @return
      */
     protected Buffer clonePayload() {
@@ -725,7 +709,7 @@ public abstract class SipMessageImpl implements SipMessage {
 
     /**
      * Transfer the data of all headers into the supplied buffer.
-     * 
+     *
      * @param dst
      */
     protected void transferHeaders(final Buffer dst) {
@@ -744,5 +728,37 @@ public abstract class SipMessageImpl implements SipMessage {
 
     @Override
     public abstract SipMessage clone();
+
+    @Override
+    public void setPayload(Buffer payload) {
+        this.payload = payload;
+    }
+
+    @Override
+    public void setInitialLine(SipInitialLine initialLine) {
+        this.initialLine = initialLine;
+    }
+
+    public static void main(String[] args) throws IOException {
+        io.pkts.packet.sip.SipMessage message = SipParser.frame(Buffers.wrap("SIP/2.0 100 Trying \n" +
+                "Via: SIP/2.0/UDP 192.168.230.8:5070;branch=z9hG4bKPj6095b01434d34e1d92b01746e6fcb278 \n" +
+                "From: <sip:34030000002000000607@3403000000>;tag=c6005ea90fcf4558983a863a3ebfe806 \n" +
+                "To: <sip:00000000001310010308@192.168.30.241:7100> \n" +
+                "Call-ID: 3acf0ce0-65f6-44ed-a8cc-d2d6c24eff25 \n" +
+                "CSeq: 17766 INVITE \n" +
+                "User-Agent: NCG V2.6.0.360033 \n" +
+                "Content-Type: application/sdp\n" +
+                "Content-Length: 0 \n" +
+                "\r\n" +
+                "a=setup: active"
+        ));
+
+//        System.out.println(message.getContentTypeHeader().toString());
+        System.out.println(message);
+        System.out.println(message.hasContent());
+        SipMessage frame = SipParser.frame(Buffers.wrap(message.toBuffer().toString()));
+        Object content = frame.getContent();
+        System.out.println(content);
+    }
 
 }

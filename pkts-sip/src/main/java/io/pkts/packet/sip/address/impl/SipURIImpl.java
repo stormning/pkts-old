@@ -33,7 +33,7 @@ public class SipURIImpl extends URIImpl implements SipURI {
     /**
      * The host.
      */
-    private final Buffer host;
+    private Buffer host;
 
     /**
      * The port
@@ -398,5 +398,11 @@ public class SipURIImpl extends URIImpl implements SipURI {
     @Override
     public void setParameter(final String name, final int value) throws SipParseException, IllegalArgumentException {
         this.setParameter(Buffers.wrap(name), Buffers.wrap(value));
+    }
+
+    @Override
+    public void setHost(Buffer host) {
+        this.isDirty = true;
+        this.host = host;
     }
 }
