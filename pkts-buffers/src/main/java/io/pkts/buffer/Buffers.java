@@ -1,9 +1,10 @@
 /**
- * 
+ *
  */
 package io.pkts.buffer;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 /**
  * @author jonas@jonasborjesson.com
@@ -11,28 +12,28 @@ import java.io.InputStream;
 public final class Buffers {
 
     private final static byte[] DigitTens = {
-        '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '2',
-        '2', '2', '2', '2', '2', '2', '2', '2', '2', '3', '3', '3', '3', '3', '3', '3', '3', '3', '3', '4', '4',
-        '4', '4', '4', '4', '4', '4', '4', '4', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '6', '6', '6',
-        '6', '6', '6', '6', '6', '6', '6', '7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '8', '8', '8', '8',
-        '8', '8', '8', '8', '8', '8', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', };
+            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '2',
+            '2', '2', '2', '2', '2', '2', '2', '2', '2', '3', '3', '3', '3', '3', '3', '3', '3', '3', '3', '4', '4',
+            '4', '4', '4', '4', '4', '4', '4', '4', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '6', '6', '6',
+            '6', '6', '6', '6', '6', '6', '6', '7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '8', '8', '8', '8',
+            '8', '8', '8', '8', '8', '8', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',};
 
     private final static byte[] DigitOnes = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
-        '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
-        '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
-        '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', };
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+            '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+            '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
+            '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',};
 
     /**
      * All possible chars for representing a number as a String
      */
     private final static byte[] digits = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
-        'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+            'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
     private final static int[] sizeTable = {
-        9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, Integer.MAX_VALUE };
+            9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, Integer.MAX_VALUE};
 
     /**
      * An empty buffer.
@@ -40,7 +41,7 @@ public final class Buffers {
     public static Buffer EMPTY_BUFFER = new EmptyBuffer();
 
     /**
-     * 
+     *
      */
     private Buffers() {
         // left empty intentionally
@@ -49,7 +50,7 @@ public final class Buffers {
     /**
      * Converts the integer value into a string and that is what is being
      * wrapped in a {@link Buffer}
-     * 
+     *
      * @param value
      * @return
      */
@@ -68,6 +69,10 @@ public final class Buffers {
     }
 
     public static Buffer wrap(final String s) {
+        return wrap(s, null);
+    }
+
+    public static Buffer wrap(final String s, String charset) {
         if (s == null) {
             throw new IllegalArgumentException("String cannot be null");
         }
@@ -75,9 +80,10 @@ public final class Buffers {
         if (s.isEmpty()) {
             return Buffers.EMPTY_BUFFER;
         }
-
-        return Buffers.wrap(s.getBytes());
+        Charset cs = charset == null ? Charset.defaultCharset() : Charset.forName(charset);
+        return Buffers.wrap(s.getBytes(cs));
     }
+
 
     public static Buffer wrap(final InputStream is) {
         if (is == null) {
@@ -89,7 +95,7 @@ public final class Buffers {
 
     /**
      * Create a new Buffer
-     * 
+     *
      * @param capacity
      * @return
      */
@@ -100,7 +106,7 @@ public final class Buffers {
 
     /**
      * Wrap the supplied byte array
-     * 
+     *
      * @param buffer
      * @return
      */
@@ -114,7 +120,7 @@ public final class Buffers {
 
     /**
      * Same as {@link #wrap(byte[])} but we will clone the byte array first.
-     * 
+     *
      * @param buffer
      * @return
      */
@@ -133,7 +139,7 @@ public final class Buffers {
      * underlying byte storage so changing the value in one will affect the
      * other. However, the original two buffers will still have their own reader
      * and writer index.
-     * 
+     *
      * @param one
      * @param two
      * @return
@@ -159,13 +165,11 @@ public final class Buffers {
     /**
      * Wrap the supplied byte array specifying the allowed range of visible
      * bytes.
-     * 
+     *
      * @param buffer
-     * @param lowerBoundary
-     *            the index of the lowest byte that is accessible to this Buffer
-     *            (zero based index)
-     * @param upperBoundary
-     *            the upper boundary (exclusive) of the range of visible bytes.
+     * @param lowerBoundary the index of the lowest byte that is accessible to this Buffer
+     *                      (zero based index)
+     * @param upperBoundary the upper boundary (exclusive) of the range of visible bytes.
      * @return
      */
     public static Buffer wrap(final byte[] buffer, final int lowerBoundary, final int upperBoundary) {
@@ -190,11 +194,11 @@ public final class Buffers {
 
     /**
      * Copied straight from the Integer class but modified to return bytes instead.
-     * 
+     * <p>
      * Places characters representing the integer i into the character array buf. The characters are
      * placed into the buffer backwards starting with the least significant digit at the specified
      * index (exclusive), and working backwards from there.
-     * 
+     * <p>
      * Will fail if i == Integer.MIN_VALUE
      */
     protected static void getBytes(int i, final int index, final byte[] buf) {
@@ -219,7 +223,7 @@ public final class Buffers {
 
         // Fall thru to fast mode for smaller numbers
         // assert(i <= 65536, i);
-        for (;;) {
+        for (; ; ) {
             q = i * 52429 >>> 16 + 3;
             r = i - ((q << 3) + (q << 1)); // r = i-(q*10) ...
             buf[--charPos] = digits[r];
@@ -235,7 +239,7 @@ public final class Buffers {
 
     /**
      * Find out how many characters it would take to represent the value as a string.
-     * 
+     *
      * @param value
      * @return
      */
@@ -245,7 +249,7 @@ public final class Buffers {
 
     // Requires positive x
     protected static int stringSize(final int x) {
-        for (int i = 0;; i++) {
+        for (int i = 0; ; i++) {
             if (x <= sizeTable[i]) {
                 return i + 1;
             }
@@ -254,11 +258,11 @@ public final class Buffers {
 
     /**
      * Copied straight from the Long class but modified to return bytes instead.
-     * 
+     * <p>
      * Places characters representing the integer i into the character array buf. The characters are
      * placed into the buffer backwards starting with the least significant digit at the specified
      * index (exclusive), and working backwards from there.
-     *
+     * <p>
      * Will fail if i == Long.MIN_VALUE
      */
     protected static void getBytes(long i, final int index, final byte[] buf) {
@@ -296,7 +300,7 @@ public final class Buffers {
 
         // Fall thru to fast mode for smaller numbers
         // assert(i2 <= 65536, i2);
-        for (;;) {
+        for (; ; ) {
             q2 = i2 * 52429 >>> 16 + 3;
             r = i2 - ((q2 << 3) + (q2 << 1)); // r = i2-(q2*10) ...
             buf[--charPos] = digits[r];
@@ -312,7 +316,7 @@ public final class Buffers {
 
     /**
      * Find out how many characters it would take to represent the value as a string.
-     * 
+     *
      * @param value
      * @return
      */
@@ -331,6 +335,4 @@ public final class Buffers {
         }
         return 19;
     }
-
-
 }

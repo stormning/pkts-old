@@ -32,6 +32,8 @@ public class SDPAnnounceParserEx extends SDPAnnounceParser {
             for (String f : unknownFields) {
                 parserTable.put(f, UnknownParser.class);
             }
+            parserTable.put("m", MediaFieldParserEx.class);
+
         } catch (Exception e) {
             //ignore
         }

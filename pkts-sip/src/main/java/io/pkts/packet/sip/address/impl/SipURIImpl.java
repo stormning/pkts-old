@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package io.pkts.packet.sip.address.impl;
 
@@ -57,7 +57,7 @@ public class SipURIImpl extends URIImpl implements SipURI {
     private boolean isDirty = false;
 
     /**
-     * 
+     *
      * @param isSips
      *            whether this is a sip or sips URL
      * @param userInfo
@@ -118,7 +118,7 @@ public class SipURIImpl extends URIImpl implements SipURI {
             } else {
                 SipParser.SCHEME_SIP_COLON.getBytes(0, dst);
             }
-            if (this.userInfo != null) {
+            if (this.userInfo != null && !userInfo.isEmpty()) {
                 this.userInfo.getBytes(0, dst);
                 dst.write(SipParser.AT);
             }
@@ -255,7 +255,7 @@ public class SipURIImpl extends URIImpl implements SipURI {
     /**
      * Comparing two {@link SipURI}s aren't trivial and the full set of rules are described in
      * RFC3261 section 19.1.4
-     * 
+     *
      * {@inheritDoc}
      */
     @Override
@@ -343,7 +343,7 @@ public class SipURIImpl extends URIImpl implements SipURI {
      * as the {@link #equals(Object)} method is checking, we just need to take enough stuff into
      * account to have a good enough spread and then the equals-method would be used to sort out any
      * ties.
-     * 
+     *
      * {@inheritDoc}
      */
     @Override
